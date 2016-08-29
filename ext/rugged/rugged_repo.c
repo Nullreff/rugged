@@ -384,6 +384,8 @@ static VALUE rb_git_repo_new(int argc, VALUE *argv, VALUE klass)
  *  :backend ::
  *    A Rugged::Backend instance
  *
+ *  :mode ::
+ *    Permission mode for files created
  *
  *    Rugged::Repository.init_at('repository', :bare) #=> #<Rugged::Repository:0x108849488>
  */
@@ -402,6 +404,20 @@ static VALUE rb_git_repo_init_at(int argc, VALUE *argv, VALUE klass)
 
 		if (rb_backend && !NIL_P(rb_backend)) {
 			rugged_repo_new_with_backend(&repo, rb_path, rb_backend);
+		}
+
+		/* Check for `:mode` */
+		VALUE rb_mode = rb_hash_aref(rb_options, CSTR2SYM("mode"));
+
+		if (rb_mode && !NIL_P(rb_mode)) {
+			git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
+			opts.flags = GIT_REPOSITORY_INIT_MKPATH;
+			opts.mode = NUM2INT(rb_mode);
+			if (RTEST(rb_is_bare))
+				opts.flags |= GIT_REPOSITORY_INIT_BARE;
+
+			error = git_repository_init_ext(&repo, StringValueCStr(rb_path), &opts);
+			rugged_exception_check(error);
 		}
 	}
 

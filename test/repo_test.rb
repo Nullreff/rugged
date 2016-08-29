@@ -503,6 +503,16 @@ class RepositoryInitTest < Rugged::TestCase
       repo.close
     end
   end
+
+  def test_init_custom_mode
+    repo = Rugged::Repository.init_at(@tmppath, :bare, mode: 0770)
+    begin
+      found_mode = File.stat(File.join(@tmppath, 'objects')).mode
+      assert_equal 0770, found_mode
+    ensure
+      repo.close
+    end
+  end
 end
 
 class RepositoryCloneTest < Rugged::TestCase
